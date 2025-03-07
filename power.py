@@ -8,7 +8,7 @@ calls = {}
 
 @app.get("/start/{id}")
 def start(id):
-    calls[id] = subprocess.Popen(["power.sh", id])
+    calls[id] = subprocess.Popen(["./power.sh", id])
     return { "message": "process started"}
 
 #@app.get("/calls")
