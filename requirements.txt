@@ -1,2 +1,2 @@
-faspapi
+fastapi
 uvicorn
