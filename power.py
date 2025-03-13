@@ -33,6 +33,6 @@ def stop(id):
         js = json.loads(df[(df["busy"]>=0)].to_json())
         os.remove("/tmp/{}.log".format(id))
         metrics = [ [js["Time"][i], js["pwr"][i]] for i in js["pwr"].keys() ]
-        return {"peak": np.max(df[(df["busy"]>1)]["pwr"]), "average": np.mean(df[(df["busy"]>1)]["pwr"]), "data": metrics }
+        return {"peak": np.nan_to_num(np.max(df[(df["busy"]>1)]["pwr"]), nan=0), "average": np.nan_to_num(np.mean(df[(df["busy"]>1)]["pwr"]), nan=0), "data": metrics }
     except:
        return { "message": "error getting metrics" }            
