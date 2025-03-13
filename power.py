@@ -1,6 +1,9 @@
-from fastapi import FastAPI, Path
+from fastapi import FastAPI
 import subprocess
 import os
+import pandas as pd
+import numpy as np
+import json
 
 app = FastAPI()
 
@@ -11,24 +14,25 @@ def start(id):
     calls[id] = subprocess.Popen(["./power.sh", id])
     return { "message": "process started"}
 
-#@app.get("/calls")
-#def get_calls():
-#    return calls
-
 @app.get("/stop/{id}")
 def stop(id):
-    #try:
-    calls[id].kill()
-    del calls[id]
-    #except:
-    #    return { "message": "error killing process" }
-    metrics = []
-    if True:
-        with open("/tmp/{}.log".format(id)) as f:
-            for line in f:
-                metrics.append(line.split(","))
+    try:
+        calls[id].kill()
+        del calls[id]
+    except:
+        return { "message": "error killing process" }
+    try:
+        metrics = []
+        # Read the text file into a DataFrame, specifying the delimiter as '\t' (tab)
+        df = pd.read_csv("/tmp/{}.log".format(id), sep='\s+', header=0)
+        df = df.drop(index=0)
+        mapping_dict = {'-': None}
+        df = df.replace(mapping_dict)
+        for c in df.columns[2:].to_list():
+            df[c] = df[c].astype(float)
+        js = json.loads(df[(df["busy"]>=0)].to_json())
         os.remove("/tmp/{}.log".format(id))
-        metrics = [ (m[0], int(m[1])) for m in metrics ]
-        return {"peak": max(m[1] for m in metrics), "average": sum(m[1] for m in metrics) / len(metrics), "data": metrics }
-    #except:
-    #    return { "message": "error getting metrics" }
+        metrics = [ [js["Time"][i], js["pwr"][i]] for i in js["pwr"].keys() ]
+        return {"peak": np.max(df[(df["busy"]>1)]["pwr"]), "average": np.mean(df[(df["busy"]>1)]["pwr"]), "data": metrics }
+    except:
+       return { "message": "error getting metrics" }            
